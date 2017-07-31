@@ -1,0 +1,18 @@
+package ${packageName};
+
+public class ${className}Builder {
+
+    private final ${className} object = new ${className}();
+
+    public ${className} build() {
+        return object;
+    }
+
+#foreach($method in $methods)
+    public ${className}Builder ${method.key}( ${method.value} value ) {
+        object.${method.key}( value );
+        return this;
+    }
+
+#end
+}
