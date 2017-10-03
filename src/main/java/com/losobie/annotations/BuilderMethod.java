@@ -6,10 +6,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 
+ *
  * @author kevin.kendall
  */
-@Target( { ElementType.METHOD, ElementType.FIELD } )
+@Target( ElementType.METHOD )
 @Retention( RetentionPolicy.SOURCE )
 public @interface BuilderMethod {
 

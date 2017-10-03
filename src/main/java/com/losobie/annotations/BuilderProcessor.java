@@ -47,10 +47,14 @@ public class BuilderProcessor extends AbstractProcessor {
         // Determine the class that we are working with
         TypeElement classElement = ( (TypeElement) elements.iterator().next().getEnclosingElement() );
         if ( ElementKind.CLASS != classElement.getKind() ) {
+            processingEnv.getMessager().printMessage(
+                    Diagnostic.Kind.ERROR,
+                    "Builder method annotation on unexpected element."
+            );
             return false;
         }
 
-        String fqClassName = classElement.getQualifiedName().toString();
+        String fullClassName = classElement.getQualifiedName().toString();
         String className = classElement.getSimpleName().toString();
         PackageElement packageElement = (PackageElement) classElement.getEnclosingElement();
         String packageName = packageElement.getQualifiedName().toString();
@@ -69,6 +73,23 @@ public class BuilderProcessor extends AbstractProcessor {
                            return exeElement;
                        } ).collect( Collectors.toSet() );
 
+        // Map a methods simple name to the full name of the first parameter
+        Map<String, String> methodTypes = methods.stream().collect( Collectors.toMap(
+                            (e) -> e.getSimpleName().toString(),
+                            (e) -> e.getParameters().get( 0 ).asType().toString()
+                    ) );
+
+        createBuilderClass( packageName, fullClassName, className, methodTypes );
+
+        return false;
+    }
+
+    private void createBuilderClass(
+            String packageName,
+            String fullClassName,
+            String className,
+            Map<String, String> methodTypes
+    ) {
         // Attempt to load the velocity properties file
         Properties props = new Properties();
         URL url = this.getClass().getClassLoader().getResource( "velocity.properties" );
@@ -76,7 +97,7 @@ public class BuilderProcessor extends AbstractProcessor {
             props.load( url.openStream() );
         } catch ( IOException ex ) {
             Logger.getLogger( BuilderProcessor.class.getName() ).log( Level.SEVERE, null, ex );
-            return false;
+            return;
         }
 
         // Initialize the Velocity engine and context
@@ -87,13 +108,7 @@ public class BuilderProcessor extends AbstractProcessor {
         vc.put( "packageName", packageName );
         vc.put( "className", className );
 
-        // Map a methods simple name to the full name of the first parameter
-        Map<String, String> methodsTypes = methods.stream().collect( Collectors.toMap(
-                            (e) -> e.getSimpleName().toString(),
-                            (e) -> e.getParameters().get( 0 ).asType().toString()
-                    ) );
-
-        vc.put( "methods", methodsTypes.entrySet() );
+        vc.put( "methods", methodTypes.entrySet() );
 
         // Load the template
         Template vt = ve.getTemplate( "BuilderTemplate.vm" );
@@ -101,13 +116,13 @@ public class BuilderProcessor extends AbstractProcessor {
         // Process the methods and template into a Java source file
         JavaFileObject jfo;
         try {
-            jfo = processingEnv.getFiler().createSourceFile( fqClassName + "Builder" );
+            jfo = processingEnv.getFiler().createSourceFile( fullClassName + "Builder" );
         } catch ( IOException ex ) {
             processingEnv.getMessager().printMessage(
                     Diagnostic.Kind.ERROR,
-                    "error generating class file: " + fqClassName + "Builder"
+                    "error generating class file: " + fullClassName + "Builder"
             );
-            return false;
+            return;
         }
 
         processingEnv.getMessager().printMessage(
@@ -125,10 +140,8 @@ public class BuilderProcessor extends AbstractProcessor {
         } catch ( IOException ex ) {
             processingEnv.getMessager().printMessage(
                     Diagnostic.Kind.ERROR,
-                    "error writing class file: " + fqClassName + "Builder"
+                    "error writing class file: " + fullClassName + "Builder"
             );
         }
-
-        return false;
     }
 }

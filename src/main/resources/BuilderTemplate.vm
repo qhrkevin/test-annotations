@@ -1,6 +1,6 @@
 package ${packageName};
 
-public class ${className}Builder {
+public final class ${className}Builder {
 
     private final ${className} object = new ${className}();
 
