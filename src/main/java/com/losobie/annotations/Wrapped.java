@@ -5,12 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- *
- * @author kevin.kendall
- */
-@Target( ElementType.METHOD )
+@Target( ElementType.FIELD )
 @Retention( RetentionPolicy.SOURCE )
-public @interface BuilderMethod {
+public @interface Wrapped {
 
 }
