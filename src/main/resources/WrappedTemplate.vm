@@ -1,0 +1,28 @@
+package ${packageName};
+
+#foreach($import in $imports)
+import ${import.package.name}.${import.simpleName};
+#end
+
+public final class ${interfaceName}Wrapper implements ${interfaceName} {
+
+    private final ${interfaceName} delegate;
+
+    public ${interfaceName}Wrapper( ${interfaceName} delegate ) {
+      this.delegate = delegate;
+    }
+
+#foreach($method in $methods)
+    @Override
+    public ${method.returnType.simpleName} ${method.name}(
+#foreach( $param in $method.parameterTypes)
+      ${param.simpleName} o${velocityCount}#if ( $velocityCount < $method.parameterCount ),#end
+
+#end
+    ) #if( $method.exceptionTypes.size() > 0 )throws #foreach( $ex in $method.exceptionTypes
+)${ex.simpleName}#end#end {
+     #if( ${method.returnType.simpleName} != "void" ) return#end delegate.${method.name}(#foreach( $param in $method.parameterTypes ) o${velocityCount}#if ( $velocityCount < $method.parameterCount ),#else #end#end);
+    }
+
+#end
+}
